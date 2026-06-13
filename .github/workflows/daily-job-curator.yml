@@ -1,0 +1,34 @@
+name: Daily Job Curator
+
+on:
+  schedule:
+    # GitHub cron is in UTC. 02:30 UTC = 08:00 AM IST.
+    # Adjust if you want it earlier/later (https://crontab.guru).
+    - cron: "30 2 * * *"
+  # Lets you trigger a run manually from the Actions tab to test.
+  workflow_dispatch:
+
+jobs:
+  curate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run job curator and send email
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          # Optional overrides:
+          # CLAUDE_MODEL: claude-opus-4-8
+          # MIN_SCORE: "6"
+        run: npm start

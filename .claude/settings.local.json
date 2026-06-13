@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm ls *)",
+      "Bash(node -e \"import\\('@anthropic-ai/sdk'\\).then\\(m=>console.log\\('sdk ok', typeof m.default\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
+      "Bash(node -e \"import\\('nodemailer'\\).then\\(m=>console.log\\('nodemailer ok', typeof m.default.createTransport\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
+      "Bash(ANTHROPIC_API_KEY=dummy GMAIL_USER=test@gmail.com GMAIL_APP_PASSWORD=dummy node -e ' *)",
+      "Bash(git check-ignore *)"
+    ]
+  }
+}
