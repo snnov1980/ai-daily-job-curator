@@ -70,9 +70,9 @@ node --env-file=.env src/index.js
    | Secret name           | Value                                  |
    | --------------------- | -------------------------------------- |
    | `ANTHROPIC_API_KEY`   | your Anthropic key                     |
-   | `GMAIL_USER`          | `snnov1980@gmail.com`                  |
+   | `GMAIL_USER`          | `<Your email address here>`            |
    | `GMAIL_APP_PASSWORD`  | the 16-char Gmail app password         |
-   | `MAIL_TO`             | `snnov1980@gmail.com`                  |
+   | `MAIL_TO`             | `<Your email address here>`            |
 
 3. **Test it now:** go to the **Actions** tab → *Daily Job Curator* → **Run workflow**. You should get an email within a few minutes.
 
