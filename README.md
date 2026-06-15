@@ -100,17 +100,18 @@ All edits live in two places:
 
 - **`src/profile.js`** — your profile text, the `SEARCH_QUERIES` list, and the rating rubric. This is the main thing to tweak to change what gets found and how it's scored.
 - **Environment variables** (`.env` locally, or GitHub secrets):
-  - `MIN_SCORE` (default `6`) — only email jobs scoring at/above this.
+  - `MIN_SCORE` (default `6`) — only email jobs scoring at/above this. **Lower to `5` if you want more jobs.**
   - `MAX_JOBS` (default `25`) — cap on jobs per email.
-  - `MAX_POSTED_DAYS` (default `7`) — drop postings older than this when the date is known.
-  - **Cost controls:**
+  - `MAX_POSTED_DAYS` (default `14`) — drop postings older than this when the date is known.
+  - **Quality / cost:**
     - `SEARCH_PROVIDER` (default `tavily`) — `tavily` (free search API) or `claude` (paid built-in search).
     - `TAVILY_API_KEY` — required when `SEARCH_PROVIDER=tavily`.
-    - `SEARCH_COUNT` (default `8`) — results fetched per query.
-    - `SEARCH_MODEL` (default `claude-haiku-4-5`) — model for the token-heavy search step (claude provider only).
-    - `RATE_MODEL` (default `claude-haiku-4-5`) — model for scoring; set `claude-sonnet-4-6` for better judgment.
+    - `SEARCH_COUNT` (default `12`) — results fetched per query (raise for more jobs).
+    - `SEARCH_DEPTH` (default `advanced`) — `advanced` (better results) or `basic` (cheaper/shallower).
+    - `RATE_MODEL` (default `claude-sonnet-4-6`) — extraction + verification + scoring. `claude-haiku-4-5` for min cost, `claude-opus-4-8` for sharpest scoring.
+    - `SEARCH_MODEL` (default `claude-haiku-4-5`) — search step for the `claude` provider only.
     - `CLAUDE_MODEL` — overrides both models at once.
-    - `VERIFY_POSTINGS` (default `true`) — `false` skips `web_fetch` for the cheapest run (may include stale jobs).
+    - `VERIFY_POSTINGS` (default `true`) — opens each posting to filter expired jobs. Unopenable ones are kept and labelled "Unverified".
     - `FETCH_MAX_TOKENS` (default `3000`) — tokens pulled per fetched page; lower = cheaper.
     - `MAX_SEARCH_USES` (default `3`) / `MAX_FETCH_USES` (default `4`) — per-query tool-call caps.
 
@@ -127,7 +128,7 @@ All edits live in two places:
 
 ## Notes & limits
 
-- **Cost:** with the default `tavily` provider, web search is **free** (within Tavily's ~1,000/month tier), so a run costs only a few cents of Haiku tokens (verify + rate). Switching to `SEARCH_PROVIDER=claude` adds ~$10/1,000 searches.
+- **Cost:** with the default `tavily` provider, web search is **free** (within Tavily's ~1,000/month tier). The only cost is Claude tokens for verify + rate — a few cents per run on the default Sonnet rate model (less on Haiku). Switching to `SEARCH_PROVIDER=claude` adds ~$10/1,000 searches.
 - **Job links:** Claude returns the real posting URLs it finds via web search. Occasionally a link may be stale (postings close); the digest shows the source (LinkedIn/Naukri) so you can verify.
 - **No scraping:** this uses Claude's web-search tool, not direct scraping of LinkedIn/Naukri (which their terms restrict). Results depend on what the search surfaces.
 - The original `job_alert_ai_1.jsx` is kept as an optional interactive dashboard. It will not work as-is in a browser (no API key, CORS); the service in `src/` is the working daily-email path.

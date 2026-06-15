@@ -35,6 +35,15 @@ function jobCard(job, rank) {
   const matched = (job.matched_skills || []).slice(0, 8);
   const missing = (job.missing_skills || []).slice(0, 6);
 
+  // Verification badge: green = confirmed open, amber = couldn't verify (check first).
+  const status = String(job.status || "").toLowerCase();
+  const statusBadge =
+    status === "open"
+      ? `<span style="background:#D1FAE5;color:#065F46;border-radius:4px;padding:3px 8px;font-size:11px;margin-left:4px;">✓ Verified open</span>`
+      : status === "unknown"
+        ? `<span style="background:#FEF3C7;color:#92400E;border-radius:4px;padding:3px 8px;font-size:11px;margin-left:4px;">⚠ Unverified — confirm before applying</span>`
+        : "";
+
   return `
   <tr><td style="padding:0 0 14px 0;">
     <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;">
@@ -49,6 +58,7 @@ function jobCard(job, rank) {
             <div style="font-size:13px;color:#6B7280;margin-top:2px;">${esc(job.company)} · ${esc(job.location)}${job.posted ? ` · 🕒 ${esc(job.posted)}` : ""}</div>
             <div style="margin-top:8px;">
               <span style="background:${badge};color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:bold;">${esc(verdict)}</span>
+              ${statusBadge}
               ${tags
                 .map(
                   (t) =>

@@ -40,14 +40,48 @@ Preferences:
 `;
 
 // ─── Search queries Claude runs against the live web (LinkedIn, Naukri, careers) ──
+// export const SEARCH_QUERIES = [
+//   "Senior SDET Lead jobs Hyderabad Bengaluru Pune site:linkedin.com/jobs",
+//   "QA Automation Lead BFSI banking India hiring site:naukri.com",
+//   "Test Manager automation Playwright Java Python India fintech LinkedIn Naukri",
+//   "Senior automation engineer wire transfer payments India jobs",
+//   "QA Lead JPMorgan Goldman Sachs Deutsche Bank India careers openings",
+//   "SDET architect AI testing LLM India hiring LinkedIn Naukri",
+// ];
+
 export const SEARCH_QUERIES = [
-  "Senior SDET Lead jobs Hyderabad Bengaluru Pune site:linkedin.com/jobs",
-  "QA Automation Lead BFSI banking India hiring site:naukri.com",
-  "Test Manager automation Playwright Java Python India fintech LinkedIn Naukri",
-  "Senior automation engineer wire transfer payments India jobs",
-  "QA Lead JPMorgan Goldman Sachs Deutsche Bank India careers openings",
-  "SDET architect AI testing LLM India hiring LinkedIn Naukri",
+  // 1. Title-first (no domain) — consolidates old 1,2,3,4
+  "SDET Lead OR QA Architect OR Principal QA Engineer OR Staff SDET India 2026 site:linkedin.com/jobs OR site:naukri.com",
+
+  // 2. BFSI/fintech domain on job boards — consolidates old 5,8
+  "QA Automation Lead OR Test Manager BFSI OR fintech OR banking OR insurance India site:linkedin.com/jobs OR site:naukri.com",
+
+  // 3. Specific fintech employers — kept as-is (unique)
+  "SDET OR QA Lead Razorpay OR PhonePe OR Paytm OR Cred OR BrowserStack India careers",
+
+  // 4. Payments domain + stack — consolidates old 9,10,11
+  "Senior SDET OR QA Lead SWIFT OR ACH OR wire transfer OR payments Playwright OR Selenium OR RestAssured India jobs",
+
+  // 5. Global bank GCCs (tier 1) — kept as-is (unique)
+  "QA Lead SDET JPMorgan OR Goldman Sachs OR Deutsche Bank OR Citi OR HSBC OR Barclays India careers",
+
+  // 6. Global bank GCCs (tier 2) — kept as-is (unique)
+  "BNY Mellon OR Standard Chartered OR Morgan Stanley India QA automation engineer openings 2026",
+
+  // 7. AI/GenAI testing — consolidates old 14,15
+  "SDET OR QA Lead AI testing OR GenAI OR LLM OR RAG OR model evaluation India 2026 site:linkedin.com OR site:naukri.com",
+
+  // 8. Consultancies (AI angle) — kept as-is (unique)
+  "Thoughtworks OR TCS OR Infosys OR Wipro QA automation lead AI testing India",
+
+  // 9. Niche job boards — kept as-is (unique)
+  "SDET Lead OR QA Automation Lead India site:glassdoor.com OR site:indeed.co.in OR site:cutshort.io",
+
+  // 10. US Bank direct careers (unique, pulled from query 1)
+  "Senior SDET OR QA Automation Lead site:careers.usbank.com",
 ];
+
+
 
 // ─── Prompts ──────────────────────────────────────────────────────────────────
 export const SEARCH_PROMPT = (query, date) => `
@@ -137,13 +171,18 @@ Below are raw web-search results for potential job postings. For each genuine jo
 posting, extract the real details and rate it against the candidate profile.
 ${
   verify
-    ? `\nVERIFY each posting is live: use the web_fetch tool to open the URL and
-EXCLUDE it if the page shows "no longer accepting applications", "expired",
-"position closed", a 404/removed page, or if it was posted more than 7 days ago.
-If you genuinely cannot open a URL, you may keep it but set "status" to "Unknown".`
-    : `\nUse the snippet and posted date to judge recency and status; exclude
-anything clearly older than 7 days or clearly closed. Set "status" to "Unknown"
-since you are not opening the pages.`
+    ? `\nVERIFY status with the web_fetch tool — open each posting URL and read the page:
+- If the page clearly shows "no longer accepting applications", "expired",
+  "position closed", or is a 404/removed page → EXCLUDE it entirely.
+- If the page confirms it is open and accepting → set "status" to "Open".
+- If you CANNOT open the page (login wall, blocked, timeout — common on LinkedIn)
+  → still INCLUDE the job, but set "status" to "Unknown". Do NOT guess "Open".
+Keep the digest useful: include open and unknown jobs; only drop ones you have
+positively confirmed are closed. Many good LinkedIn jobs can't be opened — keep
+those as "Unknown" rather than discarding them.`
+    : `\nUse the snippet and posted date to judge recency and status; exclude only
+ones that are clearly closed. Set "status" to "Unknown" since you are not opening
+the pages — do not guess "Open".`
 }
 
 CANDIDATE PROFILE:

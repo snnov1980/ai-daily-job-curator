@@ -45,7 +45,7 @@ async function tavilySearch(query) {
     },
     body: JSON.stringify({
       query,
-      search_depth: "basic", // 1 credit per search (cheapest); "advanced" costs 2
+      search_depth: config.searchDepth,
       max_results: config.searchCount,
       time_range: timeRange(config.maxPostedDays),
       topic: "general",
