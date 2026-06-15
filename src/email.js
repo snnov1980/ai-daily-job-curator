@@ -46,7 +46,7 @@ function jobCard(job, rank) {
           </td>
           <td style="vertical-align:top;padding-left:8px;">
             <div style="font-size:15px;font-weight:bold;color:#111827;">${esc(job.title)}</div>
-            <div style="font-size:13px;color:#6B7280;margin-top:2px;">${esc(job.company)} · ${esc(job.location)}</div>
+            <div style="font-size:13px;color:#6B7280;margin-top:2px;">${esc(job.company)} · ${esc(job.location)}${job.posted ? ` · 🕒 ${esc(job.posted)}` : ""}</div>
             <div style="margin-top:8px;">
               <span style="background:${badge};color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:bold;">${esc(verdict)}</span>
               ${tags

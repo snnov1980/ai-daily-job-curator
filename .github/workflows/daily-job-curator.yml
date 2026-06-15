@@ -2,9 +2,11 @@ name: Daily Job Curator
 
 on:
   schedule:
-    # GitHub cron is in UTC. 02:30 UTC = 08:00 AM IST.
-    # Adjust if you want it earlier/later (https://crontab.guru).
-    - cron: "30 17 * * *"
+    # GitHub cron is in UTC. 17:30 UTC = 11:00 PM IST.
+    # "*/3" on day-of-month = runs every 3rd day (1,4,7,...,28,31), then resets
+    # on the 1st — so there's a ~1-2 day gap at each month boundary. That's a
+    # cron limitation; fine for a job digest. Tune at https://crontab.guru.
+    - cron: "30 17 */3 * *"
   # Lets you trigger a run manually from the Actions tab to test.
   workflow_dispatch:
 
@@ -25,6 +27,7 @@ jobs:
       - name: Run job curator and send email
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}

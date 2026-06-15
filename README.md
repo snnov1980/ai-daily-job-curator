@@ -2,7 +2,7 @@
 
 A headless service that, once a day:
 
-1. Uses Claude (Opus 4.8) with **web search** to find open jobs on **LinkedIn** and **Naukri.com** matching your profile,
+1. Uses the **free Tavily Search API** to find jobs on **LinkedIn** and **Naukri.com**, then Claude (Haiku) to verify each is live and rate it against your profile,
 2. Rates each job 1–10 against your profile (domain, seniority, skills, company tier),
 3. Emails you a digest **sorted highest-match-first** via Gmail.
 
@@ -12,7 +12,8 @@ It runs automatically on **GitHub Actions** — no server to keep on, secrets st
 src/
   profile.js   ← your profile, search queries, and rating prompts (edit this to tune results)
   config.js    ← reads env vars / secrets
-  curator.js   ← search → rate → filter → sort (Anthropic SDK + web_search tool)
+  search.js    ← free Tavily Search API client (the default search provider)
+  curator.js   ← search → verify → rate → filter → sort (Tavily + Anthropic SDK)
   email.js     ← renders the HTML digest and sends via Gmail SMTP
   index.js     ← entry point
 .github/workflows/daily-job-curator.yml  ← daily cron schedule
@@ -32,6 +33,18 @@ job_alert_ai_1.jsx  ← the original React UI (optional live dashboard; not used
 ### b) Anthropic API key
 
 Get one at https://console.anthropic.com/settings/keys. This is your `ANTHROPIC_API_KEY`.
+
+### c) Tavily Search API key (free — keeps search cost at $0)
+
+The default search provider is **Tavily** (`SEARCH_PROVIDER=tavily`), which replaces
+Claude's paid `web_search` with Tavily's free tier (~1,000 searches/month, **no
+credit card**).
+
+1. Sign up at https://app.tavily.com/ (free "Researcher" plan).
+2. Copy your API key (starts with `tvly-`) → this is your `TAVILY_API_KEY`.
+
+> Prefer no extra key? Set `SEARCH_PROVIDER=claude` to use Claude's built-in web
+> search instead (no Tavily key needed, but ~$10 per 1,000 searches).
 
 ---
 
@@ -70,6 +83,7 @@ node --env-file=.env src/index.js
    | Secret name           | Value                                  |
    | --------------------- | -------------------------------------- |
    | `ANTHROPIC_API_KEY`   | your Anthropic key                     |
+   | `TAVILY_API_KEY`      | your free Tavily Search key            |
    | `GMAIL_USER`          | `<Your email address here>`            |
    | `GMAIL_APP_PASSWORD`  | the 16-char Gmail app password         |
    | `MAIL_TO`             | `<Your email address here>`            |
@@ -88,13 +102,32 @@ All edits live in two places:
 - **Environment variables** (`.env` locally, or GitHub secrets):
   - `MIN_SCORE` (default `6`) — only email jobs scoring at/above this.
   - `MAX_JOBS` (default `25`) — cap on jobs per email.
-  - `CLAUDE_MODEL` (default `claude-opus-4-8`) — set `claude-sonnet-4-6` for a cheaper run.
+  - `MAX_POSTED_DAYS` (default `7`) — drop postings older than this when the date is known.
+  - **Cost controls:**
+    - `SEARCH_PROVIDER` (default `tavily`) — `tavily` (free search API) or `claude` (paid built-in search).
+    - `TAVILY_API_KEY` — required when `SEARCH_PROVIDER=tavily`.
+    - `SEARCH_COUNT` (default `8`) — results fetched per query.
+    - `SEARCH_MODEL` (default `claude-haiku-4-5`) — model for the token-heavy search step (claude provider only).
+    - `RATE_MODEL` (default `claude-haiku-4-5`) — model for scoring; set `claude-sonnet-4-6` for better judgment.
+    - `CLAUDE_MODEL` — overrides both models at once.
+    - `VERIFY_POSTINGS` (default `true`) — `false` skips `web_fetch` for the cheapest run (may include stale jobs).
+    - `FETCH_MAX_TOKENS` (default `3000`) — tokens pulled per fetched page; lower = cheaper.
+    - `MAX_SEARCH_USES` (default `3`) / `MAX_FETCH_USES` (default `4`) — per-query tool-call caps.
+
+### Cost tiers at a glance
+
+| Goal | Settings | Trade-off |
+|---|---|---|
+| **Cheapest (default)** | `SEARCH_PROVIDER=tavily` + Haiku | Free search; only a few cents of Haiku tokens per run |
+| **Cheapest, no fetch** | Tavily + `VERIFY_POSTINGS=false` | Lowest possible; relies on Tavily's snippet, some stale jobs may slip through |
+| **No extra key** | `SEARCH_PROVIDER=claude` | No Tavily signup, but ~$10/1,000 searches |
+| **Best quality** | `RATE_MODEL=claude-sonnet-4-6` (or `claude-opus-4-8`) | Sharper scoring, higher token cost |
 
 ---
 
 ## Notes & limits
 
-- **Cost:** one daily run is a handful of web searches + a few rating calls — typically cents/day on Opus 4.8.
+- **Cost:** with the default `tavily` provider, web search is **free** (within Tavily's ~1,000/month tier), so a run costs only a few cents of Haiku tokens (verify + rate). Switching to `SEARCH_PROVIDER=claude` adds ~$10/1,000 searches.
 - **Job links:** Claude returns the real posting URLs it finds via web search. Occasionally a link may be stale (postings close); the digest shows the source (LinkedIn/Naukri) so you can verify.
 - **No scraping:** this uses Claude's web-search tool, not direct scraping of LinkedIn/Naukri (which their terms restrict). Results depend on what the search surfaces.
 - The original `job_alert_ai_1.jsx` is kept as an optional interactive dashboard. It will not work as-is in a browser (no API key, CORS); the service in `src/` is the working daily-email path.

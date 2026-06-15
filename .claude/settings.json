@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --env-file-if-exists=.env -e ' *)",
+      "Bash(node --env-file-if-exists=.env -e \"import\\('./src/curator.js'\\).then\\(\\(\\)=>console.log\\('✓ curator parses'\\)\\).catch\\(e=>{console.error\\('✗',e.message\\);process.exit\\(1\\)}\\)\")"
+    ]
+  }
+}

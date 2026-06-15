@@ -5,7 +5,10 @@ import { sendEmail, buildHtml } from "./email.js";
 const log = (msg) => console.log(`[${new Date().toISOString()}] ${msg}`);
 
 async function main() {
-  log(`Starting curation with model ${config.model} (minScore=${config.minScore})`);
+  log(
+    `Starting curation — provider=${config.searchProvider}, rate=${config.rateModel}, ` +
+      `verify=${config.verifyPostings}, minScore=${config.minScore}`,
+  );
 
   const { today, jobs } = await curate({ log });
 
